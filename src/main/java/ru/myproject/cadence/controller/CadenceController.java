@@ -1,13 +1,14 @@
 package ru.myproject.cadence.controller;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.myproject.cadence.service.ListService;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -16,8 +17,8 @@ public class CadenceController {
 
     private final ListService listService;
 
-    @PostMapping("showElements")
-    public void showElements(@RequestBody List<String> strings) {
-        listService.letsRock(strings);
+    @GetMapping("showElements")
+    public void showElements() {
+        listService.letsRock(Arrays.asList("1", "2"));
     }
 }

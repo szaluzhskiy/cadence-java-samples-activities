@@ -4,7 +4,7 @@ How to start
 
 1. Run Cadence using docker-compose from docker/docker-compose.yaml
 2. Run CadenceApplication
-3. Send POST http://127.0.0.1:7979/showElements. Replace port to port currently used by app
+3. Send GET http://127.0.0.1:7979/showElements. It can be done simply from browser
 
 Problems
 
