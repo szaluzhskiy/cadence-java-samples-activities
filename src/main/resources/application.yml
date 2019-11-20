@@ -1,0 +1,20 @@
+server:
+  port: 7979
+
+spring:
+  application: cadence-app
+
+app:
+  cadence:
+    host: localhost
+    port: 7933
+    domain: simple_domain
+    options:
+      tasklist: TASK_LIST
+      executiontimeout: 1000
+      activityPoolSize: 100
+      workflowPoolSize: 50
+
+logging:
+  level:
+    ROOT: INFO
