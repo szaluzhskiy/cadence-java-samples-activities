@@ -2,14 +2,13 @@ package ru.myproject.cadence.service;
 
 import com.uber.cadence.client.WorkflowClient;
 import com.uber.cadence.client.WorkflowOptions;
+import java.util.List;
+import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.myproject.cadence.cadence.config.CadenceExecutor;
 import ru.myproject.cadence.cadence.config.CadenceProperties;
 import ru.myproject.cadence.cadence.workflow.GetListElementsWorkflow;
-
-import javax.annotation.PostConstruct;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

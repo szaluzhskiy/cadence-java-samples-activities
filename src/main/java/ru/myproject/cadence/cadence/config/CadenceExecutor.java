@@ -6,10 +6,9 @@ import com.uber.cadence.client.WorkflowOptions;
 import com.uber.cadence.workflow.ChildWorkflowOptions;
 import com.uber.cadence.workflow.Functions;
 import com.uber.cadence.workflow.Workflow;
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.stereotype.Service;
 
 @Service
 public class CadenceExecutor {

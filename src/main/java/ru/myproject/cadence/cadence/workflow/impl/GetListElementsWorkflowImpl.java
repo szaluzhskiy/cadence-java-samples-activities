@@ -1,17 +1,13 @@
 package ru.myproject.cadence.cadence.workflow.impl;
 
 import com.uber.cadence.activity.ActivityOptions;
-import com.uber.cadence.workflow.Async;
 import com.uber.cadence.workflow.Promise;
 import com.uber.cadence.workflow.Workflow;
-import lombok.NoArgsConstructor;
-import ru.myproject.cadence.cadence.activity.ShowElementsActivity;
-import ru.myproject.cadence.cadence.activity.impl.ShowElementsActivityImpl;
-import ru.myproject.cadence.cadence.workflow.GetListElementsWorkflow;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import ru.myproject.cadence.cadence.activity.ShowElementsActivity;
+import ru.myproject.cadence.cadence.workflow.GetListElementsWorkflow;
 
 public class GetListElementsWorkflowImpl implements GetListElementsWorkflow {
 

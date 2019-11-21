@@ -5,8 +5,8 @@ import com.uber.cadence.worker.WorkerOptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
+import ru.myproject.cadence.cadence.activity.impl.ShowElementsActivityImpl;
 import ru.myproject.cadence.cadence.config.CadenceProperties;
-import ru.myproject.cadence.cadence.workflow.GetListElementsWorkflow;
 import ru.myproject.cadence.cadence.workflow.impl.GetListElementsWorkflowImpl;
 
 @Service
@@ -24,6 +24,7 @@ public class WorkerStarter implements CommandLineRunner {
         Worker bsoWorker = factory.newWorker(cadenceProperties.getCadenceOptions().getTaskList(),
                 getWorkerOptions(cadenceProperties.getCadenceOptions()));
         bsoWorker.registerWorkflowImplementationTypes(GetListElementsWorkflowImpl.class);
+        bsoWorker.registerActivitiesImplementations(new ShowElementsActivityImpl());
 
         factory.start();
     }

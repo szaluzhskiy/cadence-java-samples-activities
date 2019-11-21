@@ -1,5 +1,6 @@
 package ru.myproject.cadence.cadence.config;
 
+import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,8 +9,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.myproject.cadence.cadence.workflow.GetListElementsWorkflow;
-
-import javax.validation.constraints.NotBlank;
 
 @Data
 @Builder
