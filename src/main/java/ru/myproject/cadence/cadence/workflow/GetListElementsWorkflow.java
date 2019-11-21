@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface GetListElementsWorkflow {
 
-    @WorkflowMethod
+    @WorkflowMethod(executionStartToCloseTimeoutSeconds = 600, taskList = "TASK_LIST")
     void getListElements(List<String> strings);
 }

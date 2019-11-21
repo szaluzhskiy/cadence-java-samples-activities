@@ -4,6 +4,6 @@ import com.uber.cadence.activity.ActivityMethod;
 
 public interface ShowElementsActivity {
 
-    @ActivityMethod(scheduleToCloseTimeoutSeconds = 1200, taskList = "TASK_LIST")
-    Void showElements(String element);
+    @ActivityMethod(scheduleToCloseTimeoutSeconds = 300, taskList = "TASK_LIST")
+    void showElements(String element);
 }

@@ -4,7 +4,9 @@ import com.uber.cadence.activity.ActivityOptions;
 import com.uber.cadence.workflow.Async;
 import com.uber.cadence.workflow.Promise;
 import com.uber.cadence.workflow.Workflow;
+import lombok.NoArgsConstructor;
 import ru.myproject.cadence.cadence.activity.ShowElementsActivity;
+import ru.myproject.cadence.cadence.activity.impl.ShowElementsActivityImpl;
 import ru.myproject.cadence.cadence.workflow.GetListElementsWorkflow;
 
 import java.time.Duration;
@@ -25,12 +27,13 @@ public class GetListElementsWorkflowImpl implements GetListElementsWorkflow {
     public void getListElements(List<String> strings) {
 
         List<Promise<Void>> promises = new ArrayList<>();
-
+        showElementsActivity.showElements("1");/*
         strings.forEach(string -> {
-            Promise<Void> promise = Async.function(showElementsActivity::showElements, string);
-            promises.add(promise);
-        });
+            ;
+          //  Promise<Void> promise = Async.function(showElementsActivity::showElements, string);
+            //promises.add(promise);
+        });*/
 
-        promises.forEach(Promise::get);
+        //promises.forEach(Promise::get);
     }
 }
