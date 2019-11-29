@@ -15,6 +15,11 @@ app:
       activityPoolSize: 100
       workflowPoolSize: 50
 
+metrics:
+  prometheus:
+    timerType: "histogram"
+    listenAddress: "127.0.0.1:9090"
+
 logging:
   level:
     ROOT: INFO
