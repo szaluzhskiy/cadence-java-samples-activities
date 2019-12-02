@@ -21,7 +21,7 @@ public class GetListElementsWorkflowImpl implements GetListElementsWorkflow {
 
     @Override
     public void getListElements(List<String> strings) {
-
+        long startWf = System.currentTimeMillis();
         List<Promise<Void>> promises = new ArrayList<>();
         showElementsActivity.showElements("1");/*
         strings.forEach(string -> {
@@ -31,5 +31,8 @@ public class GetListElementsWorkflowImpl implements GetListElementsWorkflow {
         });*/
 
         //promises.forEach(Promise::get);
+        long stopWf = System.currentTimeMillis();
+
+        System.out.format("WF Duration E2E =  %d\n", (stopWf - startWf) / 1000);
     }
 }

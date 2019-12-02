@@ -1,13 +1,13 @@
 package ru.myproject.cadence.monitoring;
 
 import com.uber.cadence.internal.metrics.MetricsType;
-import com.uber.m3.util.ImmutableMap;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import io.prometheus.client.Histogram.Timer;
 import io.prometheus.client.SimpleCollector;
+import io.prometheus.client.Summary;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -16,27 +16,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import javax.print.DocFlavor.STRING;
 import lombok.extern.slf4j.Slf4j;
 
 
 /**
  * Definition of scraped metrics
- *
- * @author Stan Fedetsov
  */
 @Slf4j
 public class Metrics<METRIC_DEFINITION_STRATEGY> {
 
+  private static final Pattern GET_MODULE_NAME_JAR = Pattern.compile("^file:.+[/|\\\\]([a-zA-Z0-9-.]+).jar!.+$");
+  private static final Pattern GET_MODULE_NAME_CLASS = Pattern.compile("^.+[/|\\\\]([a-zA-Z0-9]+)\\.class$");
+
   protected static final String[] MANDATOTY_LABELS = {"component", "node"};
 
 
-  protected final static Map<MetricDef, SimpleCollector> collectors = new HashMap<>();
+  public final static Map<MetricDef, SimpleCollector> collectors = new HashMap<>();
   protected static String[] labelNames;
   protected static String[] labelValues;
 
@@ -48,38 +47,59 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
   static Map<String, Function<Field, MetricDef>>
       METRIC_DEFINITION_STRATEGY = new HashMap();
 
-  private Metrics() {
-    METRIC_DEFINITION_STRATEGY.put("COUNTER", this::buildCounterMetricDefinition);
-    METRIC_DEFINITION_STRATEGY.put("LATENCY", this::buildLatencyMetricDefinition);
+
+  public static MetricDef buildCounterMetricDefinition(Field field) {
+    String metricName = null;
+    try {
+      metricName = (String) MetricsType.class.getField(field.getName()).get(null);
+      metricName = metricName.toLowerCase();
+      metricName = metricName.replace("-", "_");
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+    return new MetricDef(metricName, field.getName(), Counter.class, null);
   }
 
-
-
-  public MetricDef buildCounterMetricDefinition(Field field) {
-    return new MetricDef(field.getName(), "", Counter.class, null);
-  }
-
-  public MetricDef buildLatencyMetricDefinition(Field field) {
+  public static MetricDef buildLatencyMetricDefinition(Field field) {
     //TODO: Fix bucket = null
-    return new MetricDef(field.getName(), "", Histogram.class, null);
+    String metricName = null;
+    try {
+      metricName = (String) MetricsType.class.getField(field.getName()).get(null);
+      metricName = metricName.toLowerCase();
+      metricName = metricName.replace("-", "_");
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (NoSuchFieldException e) {
+      e.printStackTrace();
+    }
+    return new MetricDef(metricName, field.getName(), Histogram.class, null);
   }
 
   /**
    * Method initializes collectors from configuration
    */
   public static void init(MonitoringConfig config) {
-    reset();
-    //TODO: Fix
-    //processMandatoryLabelValues(extractMandatoryValues(config));
+    METRIC_DEFINITION_STRATEGY.put("COUNTER", Metrics::buildCounterMetricDefinition);
+    METRIC_DEFINITION_STRATEGY.put("LATENCY", Metrics::buildLatencyMetricDefinition);
+    processMandatoryLabelValues(extractMandatoryValues(config));
     processOptionalLabels(extractOptionalLabels(config));
-    List<MetricDef> metrics = processDefaultCollectors(config);
-    //TODO: Fix
-    //processCustomMetrics(metrics, config);
+
     Field[] mtFields = MetricsType.class.getFields();
     for (Field mtField : mtFields) {
-      MetricDef md = METRIC_DEFINITION_STRATEGY.get(mtField.getName().substring(mtField.getName().lastIndexOf("_"))).apply(mtField);
-      registerCollector(md);
+      MetricDef md = null;
+      if (mtField.getName().contains("COUNTER")) {
+        md = METRIC_DEFINITION_STRATEGY.get("COUNTER")
+            .apply(mtField);
+        registerCollector(md);
+      } else if (mtField.getName().contains("LATENCY")) {
+        md = METRIC_DEFINITION_STRATEGY.get("LATENCY")
+            .apply(mtField);
+        registerCollector(md);
+      }
     }
+    //CollectorRegistry.defaultRegistry.register(collectors);
   }
 
   /**
@@ -175,7 +195,6 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
     return startTimer(MetricsUtils.getMetricDefByName(metricName), optionalLabels);
   }
 
-
 //  /**
 //   * Obtains either a name of executed JAR or a class of executed main() function
 //   */
@@ -195,7 +214,6 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
 //  }
 
 
-
   /* (non-Javadoc)
    * Returns a list of default metrics
    */
@@ -213,7 +231,7 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
     return res;
   }
 
-/*  *//* (non-Javadoc)
+  /*  *//* (non-Javadoc)
    * Appends custom metrics from configuration
    *//*
   private static List<MetricDef> processCustomMetrics(List<MetricDef> metrics, MonitoringConfig config) {
@@ -286,11 +304,32 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
     return res;
   }
 
-/*  *//* (non-Javadoc)
+  /**
+   * Sets histogram with a value
+   */
+  public static void observe(MetricDef md, double amt, String... optionalLabels) {
+    String[] labels = MetricsUtils.mergeLabelValues(optionalLabels);
+    observeCollector(Metrics.collectors.get(md), labels, amt);
+  }
+
+  /**
+   * Sets histogram identified by its name with a value
+   */
+  public static void observe(String metricName, double amt, String... optionalLabels) {
+    observe(MetricsUtils.getMetricDefByName(metricName), amt, optionalLabels);
+  }
+
+  public static void observeCollector(SimpleCollector collector, String[] labels, Double amt) {
+    if (Objects.nonNull(collector) && collector instanceof Histogram) {
+      ((Histogram) collector).labels(labels).observe(amt);
+    }
+  }
+
+  /*  *//* (non-Javadoc)
    * Sets mandatory label values to specified ones, defaults to:
    *  - component: main class
    *  - node: local IP address
-   *//*
+   */
   private static void processMandatoryLabelValues(String... values) {
     List<String> res = new ArrayList<>();
     if (biggerThan(values, 1) && !MetricsUtils.isStringEmpty(values[0])) {
@@ -304,10 +343,28 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
       res.add("127.0.0.1");
     }
     labelValues = res.toArray(new String[0]);
-  }*/
+  }
 
   private static boolean biggerThan(String[] array, int size) {
     return (array != null && array.length >= size);
+  }
+
+  /**
+   * Obtains either a name of executed JAR or a class of executed main() function
+   */
+  public static String getModuleName() {
+    StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+    StackTraceElement main = elements[elements.length - 1];
+    String jar = Metrics.class.getResource("/" + main.getClassName().replace('.', '/') + ".class").getPath();
+    Matcher m = GET_MODULE_NAME_JAR.matcher(jar);
+    if (m.matches()) {
+      return m.group(1);
+    }
+    m = GET_MODULE_NAME_CLASS.matcher(jar);
+    if ((m.matches())) {
+      return m.group(1);
+    }
+    return "UNKNOWN";
   }
 
 
@@ -359,6 +416,8 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
       collectors.put(md, registerCounter(md.getName(), md.getHelp()));
     } else if (md.getType().equals(Histogram.class)) {
       collectors.put(md, registerHistogram(md.getName(), md.getHelp(), md.getBuckets()));
+    } else if (md.getType().equals(Summary.class)) {
+      collectors.put(md, registerSummary(md.getName(), md.getHelp()));
     } else {
       collectors.put(md, registerGauge(md.getName(), md.getHelp()));
     }
@@ -382,11 +441,12 @@ public class Metrics<METRIC_DEFINITION_STRATEGY> {
     return builder.register();
   }
 
+  private static SimpleCollector registerSummary(String name, String help) {
+    Summary.Builder builder = Summary.build(name, help).labelNames(labelNames);
+    return builder.register();
+  }
+
   private static SimpleCollector registerGauge(String name, String help) {
     return Gauge.build(name, help).labelNames(labelNames).register();
   }
-
-  /* (non-Javadoc)
-   * Clones values array and sets optional values if provided
-   */
 }

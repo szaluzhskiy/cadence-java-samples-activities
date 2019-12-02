@@ -1,6 +1,7 @@
 package ru.myproject.cadence.config;
 
 import io.prometheus.client.exporter.MetricsServlet;
+import io.prometheus.client.spring.boot.SpringBootMetricsCollector;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import ru.myproject.cadence.monitoring.Metrics;
 import ru.myproject.cadence.monitoring.MonitoringConfig;
 
 
@@ -40,13 +42,6 @@ public class MonitoringConfiguration {
     me[5] = "^correction_*$";
     config.setMetricsEnable(me);
     config.setLabels(mandatoryLabels);
-   // Map<String, CustomMetricsCollector> beans = applicationContext.getBeansOfType(CustomMetricsCollector.class);
-//    beans.forEach((key, value) -> config.getCustomMetrics().addAll(value.initCustomMetrics()));
-//    Map<String, CustomMetricsCollector> map = beans.entrySet().stream().collect(Collectors.toMap(
-//        e -> e.getValue().getClass().getName(),
-//        Entry::getValue
-//    ));
-  //  MonitoringAspect.setCustomizers(map);
     return config;
   }
 
@@ -79,16 +74,8 @@ public class MonitoringConfiguration {
   }
 
   @Bean
-  public TaskExecutor pool() {
-    ThreadPoolTaskExecutor res = new ThreadPoolTaskExecutor();
-    res.setCorePoolSize(2);
-    res.setMaxPoolSize(2);
-    return res;
-  }
-
-  @Bean
   public ServletRegistrationBean<Servlet> registerServlet(@Autowired MonitoringConfig config) {
-    return new ServletRegistrationBean<>(new MetricsServlet(), config.getHttpUrl());
+    Metrics.init(config);
+    return new ServletRegistrationBean<>(new MetricsServlet(), "/metrics");
   }
-
 }

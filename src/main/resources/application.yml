@@ -15,6 +15,8 @@ app:
       activityPoolSize: 100
       workflowPoolSize: 50
 
+
+
 metrics:
   prometheus:
     timerType: "histogram"
